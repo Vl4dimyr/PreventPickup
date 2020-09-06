@@ -4,11 +4,13 @@ using System.Linq;
 using BepInEx;
 using BepInEx.Configuration;
 using RoR2;
+using R2API.Utils;
 
 namespace PreventPickup
 {
     [BepInDependency("com.bepis.r2api", BepInDependency.DependencyFlags.HardDependency)]
     [BepInPlugin("de.userstorm.preventpickup", "PreventPickup", "{VERSION}")]
+    [NetworkCompatibility(CompatibilityLevel.NoNeedForSync, VersionStrictness.DifferentModVersionsAreOk)]
     public class PreventPickupPlugin : BaseUnityPlugin
     {
         private static On.RoR2.GenericPickupController.orig_GrantItem GrantItem;
