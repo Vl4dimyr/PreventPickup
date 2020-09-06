@@ -9,7 +9,7 @@ This mod prevents picking up items you don't want and gives you scrap or a rando
 The config file (`\BepInEx\config\de.userstorm.preventpickup.cfg`) will be crated automatically when the mod is loaded.
 You need to restart the game for changes to apply in game.
 
-With the following config **example** picking up a `Soldier's Syringe` would have a 33% chance of giving a random white item, otherwise [White Scrap](https://riskofrain2.gamepedia.com/Item_Scrap,_White). Picking up `Tougher Times` would **not** be prevented.
+With the following config **example** picking up a `Soldier´s Syringe` would have a 33% chance of giving a random white item, otherwise [White Scrap](https://riskofrain2.gamepedia.com/Item_Scrap,_White). Picking up `Tougher Times` would **not** be prevented.
 
 ```ini
 [Balance]
@@ -23,7 +23,7 @@ WhiteRandomItemChance = 0.33
 
 [PreventPickup]
 
-## Item index: 0 | Name: Soldier's Syringe | Tier: Tier1
+## Item index: 0 | Name: Soldier´s Syringe | Tier: Tier1
 # Setting type: Boolean
 # Default value: false
 Syringe = true
@@ -51,3 +51,9 @@ The [Changelog](https://github.com/Vl4dimyr/PreventPickup/blob/master/CHANGELOG.
 ## Bugs/Feedback
 
 For bugs or feedback please use [GitHub Issues](https://github.com/Vl4dimyr/PreventPickup/issues).
+
+## Help me out
+
+[![Patreon](https://cdn.iconscout.com/icon/free/png-64/patreon-2752105-2284922.png)](https://www.patreon.com/vl4dimyr)
+
+It is by no means required, but if you would like to support me head over to [my Patreon](https://www.patreon.com/vl4dimyr).
