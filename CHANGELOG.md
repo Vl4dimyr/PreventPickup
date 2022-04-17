@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Mod is now marked as client side mod
 
-## [1.0.0] - 2020-08-19
+## [1.0.0] - 2020-08-25
 ### Added
 - All project files (GitHub)
 - Pre/post build scripts
