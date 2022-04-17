@@ -36,7 +36,7 @@ namespace PreventPickup
             );
         }
 
-        private CharacterMaster GetCharacterMasterByInvetory(Inventory inventory)
+        private CharacterMaster GetCharacterMasterByInventory(Inventory inventory)
         {
             PlayerCharacterMasterController playerCharacterMasterController =
                 PlayerCharacterMasterController.instances.FirstOrDefault((PlayerCharacterMasterController p) =>
@@ -183,14 +183,14 @@ namespace PreventPickup
         {
             if (PreventPickupConfigEntries.ContainsKey(itemIndex) && PreventPickupConfigEntries[itemIndex].Value)
             {
-                CharacterMaster characterMasterByInvetory = GetCharacterMasterByInvetory(self);
+                CharacterMaster characterMasterByInventory = GetCharacterMasterByInventory(self);
 
-                if (characterMasterByInvetory == null)
+                if (characterMasterByInventory == null)
                 {
                     return;
                 }
 
-                GiveRandomItem(characterMasterByInvetory.GetBody(), self, itemIndex);
+                GiveRandomItem(characterMasterByInventory.GetBody(), self, itemIndex);
 
                 return;
             }
