@@ -4,7 +4,7 @@
     "website_url": "https://github.com/Vl4dimyr/PreventPickup",
     "description": "This mod prevents picking up items you don't want and gives you scrap or a random item of the same rarity instead (configurable).",
     "dependencies": [
-        "bbepis-BepInExPack-5.4.1903",
-        "tristanmcpherson-R2API-4.3.5"
+        "bbepis-BepInExPack-5.4.1905",
+        "tristanmcpherson-R2API-4.3.21"
     ]
 }

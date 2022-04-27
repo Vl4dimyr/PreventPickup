@@ -6,6 +6,14 @@ This mod prevents picking up items you don't want and gives you scrap or a rando
 
 ## Config
 
+### TL;DR
+
+Use [Risk Of Options](https://thunderstore.io/package/Rune580/Risk_Of_Options/) for in-game settings!
+
+![Risk Of Options Screenshot](https://raw.githubusercontent.com/Vl4dimyr/PreventPickup/master/images/risk_of_options.jpg)
+
+### Manual Config
+
 The config file (`\BepInEx\config\de.userstorm.preventpickup.cfg`) will be crated automatically when the mod is loaded.
 You need to restart the game for changes to apply in game.
 
@@ -19,7 +27,7 @@ With the following config **example** picking up a `Soldier´s Syringe` would ha
 # Default value: 0.05
 WhiteRandomItemChance = 0.33
 
-...
+# ...
 
 [PreventPickup]
 
@@ -33,7 +41,7 @@ Syringe = true
 # Default value: false
 Bear = false
 
-...
+# ...
 ```
 
 > If you want to play without shields set `PersonalShield`, `ShieldOnly` and `HeadHunter` pickup prevention to `true`
