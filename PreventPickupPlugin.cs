@@ -8,12 +8,13 @@ using R2API.Utils;
 
 namespace PreventPickup
 {
+    [BepInDependency("com.rune580.riskofoptions", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInDependency("com.bepis.r2api", BepInDependency.DependencyFlags.HardDependency)]
     [BepInPlugin("de.userstorm.preventpickup", "PreventPickup", "{VERSION}")]
     [NetworkCompatibility(CompatibilityLevel.NoNeedForSync, VersionStrictness.DifferentModVersionsAreOk)]
     public class PreventPickupPlugin : BaseUnityPlugin
     {
-        private static On.RoR2.GenericPickupController.orig_GrantItem GrantItem;
+        private static On.RoR2.GenericPickupController.orig_AttemptGrant AttemptGrant;
         private static GenericPickupController genericPickupController;
 
         public static ConfigEntry<float> WhiteRandomItemChance { get; set; }
@@ -36,7 +37,7 @@ namespace PreventPickup
             );
         }
 
-        private CharacterMaster GetCharacterMasterByInvetory(Inventory inventory)
+        private CharacterMaster GetCharacterMasterByInventory(Inventory inventory)
         {
             PlayerCharacterMasterController playerCharacterMasterController =
                 PlayerCharacterMasterController.instances.FirstOrDefault((PlayerCharacterMasterController p) =>
@@ -79,7 +80,7 @@ namespace PreventPickup
 
             if (list.Count() == 0)
             {
-                list.Add(ItemIndex.ScrapWhite);
+                list.Add(RoR2Content.Items.ScrapWhite.itemIndex);
             }
 
             return list[new Random().Next(list.Count)];
@@ -91,19 +92,19 @@ namespace PreventPickup
 
             switch (definition.tier)
             {
-                case ItemTier.Tier1:
-                    return ItemIndex.ScrapWhite;
-                case ItemTier.Tier2:
-                    return ItemIndex.ScrapGreen;
-                case ItemTier.Tier3:
-                    return ItemIndex.ScrapRed;
-                case ItemTier.Lunar:
-                    return ItemIndex.ScrapGreen;
-                case ItemTier.Boss:
-                    return ItemIndex.ScrapYellow;
+               case ItemTier.Tier1:
+                   return RoR2Content.Items.ScrapWhite.itemIndex;
+               case ItemTier.Tier2:
+                   return RoR2Content.Items.ScrapGreen.itemIndex;
+               case ItemTier.Tier3:
+                   return RoR2Content.Items.ScrapRed.itemIndex;
+               case ItemTier.Lunar:
+                   return RoR2Content.Items.ScrapGreen.itemIndex;
+               case ItemTier.Boss:
+                   return RoR2Content.Items.ScrapYellow.itemIndex;
             }
 
-            return ItemIndex.ScrapWhite;
+            return RoR2Content.Items.ScrapWhite.itemIndex;
         }
 
         private float GetChance(ItemIndex itemIndex)
@@ -127,7 +128,7 @@ namespace PreventPickup
             return 0f;
         }
 
-        private void GiveRandomItem(CharacterBody body, Inventory inventory, ItemIndex itemIndex)
+        private void GiveRandomItem(CharacterBody body, ItemIndex itemIndex)
         {
             float chance = GetChance(itemIndex);
 
@@ -137,7 +138,7 @@ namespace PreventPickup
 
                 SendChatMessage("Lucky!");
 
-                GrantItem.Invoke(genericPickupController, body, inventory);
+                AttemptGrant.Invoke(genericPickupController, body);
 
                 return;
             }
@@ -147,55 +148,63 @@ namespace PreventPickup
                 SendChatMessage("No luck this time!");
             }
 
-            GiveScrapItem(body, inventory, itemIndex);
+            GiveScrapItem(body, itemIndex);
         }
 
-        private void GiveScrapItem(CharacterBody body, Inventory inventory, ItemIndex itemIndex)
+        private void GiveScrapItem(CharacterBody body, ItemIndex itemIndex)
         {
             genericPickupController.pickupIndex = PickupCatalog.FindPickupIndex(GetScrapItemIndex(itemIndex));
 
-            GrantItem.Invoke(genericPickupController, body, inventory);
+            AttemptGrant.Invoke(genericPickupController, body);
         }
 
-        private void OnGrantItem(
-            On.RoR2.GenericPickupController.orig_GrantItem orig,
+        private void OnAttemptGrant(
+            On.RoR2.GenericPickupController.orig_AttemptGrant orig,
             GenericPickupController self,
-            CharacterBody body,
-            Inventory inventory
+            CharacterBody body
         )
         {
-            GrantItem = orig;
+            AttemptGrant = orig;
             genericPickupController = self;
 
             ItemIndex itemIndex = PickupCatalog.GetPickupDef(self.pickupIndex).itemIndex;
 
             if (PreventPickupConfigEntries.ContainsKey(itemIndex) && PreventPickupConfigEntries[itemIndex].Value)
             {
-                GiveRandomItem(body, inventory, itemIndex);
+                GiveRandomItem(body, itemIndex);
 
                 return;
             }
 
-            orig.Invoke(self, body, inventory);
+            orig.Invoke(self, body);
         }
 
-        private void OnGiveItem(On.RoR2.Inventory.orig_GiveItem orig, Inventory self, ItemIndex itemIndex, int count)
+        private void OnGiveItem(On.RoR2.Inventory.orig_GiveItem_ItemDef_int orig, Inventory self, ItemDef itemDef, int count)
         {
+            ItemIndex itemIndex = itemDef.itemIndex;
+
             if (PreventPickupConfigEntries.ContainsKey(itemIndex) && PreventPickupConfigEntries[itemIndex].Value)
             {
-                CharacterMaster characterMasterByInvetory = GetCharacterMasterByInvetory(self);
+                CharacterMaster characterMasterByInventory = GetCharacterMasterByInventory(self);
 
-                if (characterMasterByInvetory == null)
+                if (characterMasterByInventory == null)
                 {
                     return;
                 }
 
-                GiveRandomItem(characterMasterByInvetory.GetBody(), self, itemIndex);
+                GiveRandomItem(characterMasterByInventory.GetBody(), itemIndex);
 
                 return;
             }
 
-            orig.Invoke(self, itemIndex, count);
+            orig.Invoke(self, itemDef, count);
+        }
+
+        private void OnItemCatalogInit(On.RoR2.ItemCatalog.orig_Init orig)
+        {
+            orig.Invoke();
+
+            InitConfig();
         }
 
         private string GetChanceDescription (string from, string to)
@@ -205,7 +214,7 @@ namespace PreventPickup
             return $"Chance to get a random {to} item when a {from} item pick up is prevented. {info}";
         }
 
-        public void Start()
+        private void InitConfig()
         {
             WhiteRandomItemChance = Config.Bind(
                 "Balance",
@@ -242,18 +251,29 @@ namespace PreventPickup
                 GetChanceDescription("boss", "boss")
             );
 
-            for (int i = 0; i < (int)ItemIndex.Count; i++)
+            if (RiskOfOptionsMod.enabled)
             {
-                ItemIndex itemIndex = (ItemIndex)i;
+                RiskOfOptionsMod.Init(
+                    "This mod shows the current item counts in the item selection dialog of the Artifact of Command and the Scrapper."
+                );
+                RiskOfOptionsMod.AddStepSliderOption(WhiteRandomItemChance, 0, 1, 0.01f);
+                RiskOfOptionsMod.AddStepSliderOption(GreenRandomItemChance, 0, 1, 0.01f);
+                RiskOfOptionsMod.AddStepSliderOption(RedRandomItemChance, 0, 1, 0.01f);
+                RiskOfOptionsMod.AddStepSliderOption(LunarRandomItemChance, 0, 1, 0.01f);
+                RiskOfOptionsMod.AddStepSliderOption(BossRandomItemChance, 0, 1, 0.01f);
+            }
+
+            foreach (ItemIndex itemIndex in ItemCatalog.allItems)
+            {
                 ItemDef definition = ItemCatalog.GetItemDef(itemIndex);
 
                 if (
-                    itemIndex.Equals(ItemIndex.ArtifactKey) ||
-                    itemIndex.Equals(ItemIndex.CaptainDefenseMatrix) ||
-                    itemIndex.Equals(ItemIndex.ScrapWhite) ||
-                    itemIndex.Equals(ItemIndex.ScrapGreen) ||
-                    itemIndex.Equals(ItemIndex.ScrapRed) ||
-                    itemIndex.Equals(ItemIndex.ScrapYellow) ||
+                    definition.Equals(RoR2Content.Items.ArtifactKey) ||
+                    definition.Equals(RoR2Content.Items.CaptainDefenseMatrix) ||
+                    definition.Equals(RoR2Content.Items.ScrapWhite) ||
+                    definition.Equals(RoR2Content.Items.ScrapGreen) ||
+                    definition.Equals(RoR2Content.Items.ScrapRed) ||
+                    definition.Equals(RoR2Content.Items.ScrapYellow) ||
                     definition.tier.Equals(ItemTier.NoTier)
                 )
                 {
@@ -264,23 +284,30 @@ namespace PreventPickup
 
                 PreventPickupConfigEntries[itemIndex] = Config.Bind(
                     "PreventPickup",
-                    itemIndex.ToString(),
+                    definition.name,
                     false,
                     $"Item index: {(int)itemIndex} | Name: {displayName} | Tier: {definition.tier}"
                 );
+
+                if (RiskOfOptionsMod.enabled)
+                {
+                    RiskOfOptionsMod.AddCheckboxOption(PreventPickupConfigEntries[itemIndex]);
+                }
             }
         }
 
         public void Awake()
         {
-            On.RoR2.GenericPickupController.GrantItem += OnGrantItem;
-            On.RoR2.Inventory.GiveItem += OnGiveItem;
+            On.RoR2.GenericPickupController.AttemptGrant += OnAttemptGrant;
+            On.RoR2.Inventory.GiveItem_ItemDef_int += OnGiveItem;
+            On.RoR2.ItemCatalog.Init += OnItemCatalogInit;
         }
 
         public void OnDestroy()
         {
-            On.RoR2.GenericPickupController.GrantItem -= OnGrantItem;
-            On.RoR2.Inventory.GiveItem -= OnGiveItem;
+            On.RoR2.GenericPickupController.AttemptGrant -= OnAttemptGrant;
+            On.RoR2.Inventory.GiveItem_ItemDef_int -= OnGiveItem;
+            On.RoR2.ItemCatalog.Init -= OnItemCatalogInit;
         }
     }
 }
